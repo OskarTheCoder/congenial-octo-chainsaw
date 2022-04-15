@@ -202,6 +202,7 @@ class PLAYER():
             if self.collision(screen, platform.get_rect(self)):
                 #self.pos[0]-=self.dir*self.speed
                 self.movement[0]-=self.dir*self.speed
+                self.jumping = True
                 return False
         for p in particles:
             pass
@@ -526,7 +527,6 @@ while (running == False):
                     if targetRect != 0:
                         if bullet.collision(GAME, targetRect):
                             bullets.remove(bullets[bullets.index(bullet)])
-                            print("Target Hit!")
 
                             levelData[4][3] = '4'
                             if level == 1:
@@ -566,4 +566,3 @@ while (running == False):
 
 
 
-    
