@@ -7,26 +7,80 @@ pygame.init()
 pygame.mouse.set_visible(True)
 
 clock = pygame.time.Clock()
+print()
+mapImg = pygame.image.load("graphics/map.png")
 
 gameOver = False
 levelComplete = False
 
+def menu(screen, levelCompleted):
+    inMenu = True
+
+    levelCompletedFont = pygame.font.Font("fonts/futurist.ttf", 32)
+    levelCompletedText = f"LEVEL {levelCompleted} COMPLETED"
+    levelCompletedLabel = levelCompletedFont.render(levelCompletedText,True,((100,20,4)))
+    levelCompletedTextPos = (352-levelCompletedLabel.get_width()//2,levelCompletedLabel.get_height()*2)
+
+    continueLabel = levelCompletedFont.render("CONTINUE", True, ((100,20,4)) )
+    continuePosLabel = (352-continueLabel.get_width()//2,200)
+
+    continuePos = (352-250,200)
+    continueRect = (continuePos[0],continuePos[1]-40,500,120)
+
+    while(inMenu):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return 1
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                
+                rect = pygame.Rect(continuePos[0],continuePos[1]-40,500,120)
+                if rect.collidepoint(event.pos):
+                    return 0
+        screen.fill((255,255,255))
+        screen.blit(levelCompletedLabel,levelCompletedTextPos)
+        screen.blit(mapImg, (352-mapImg.get_width()//2,704-mapImg.get_height()-10))
+        pygame.draw.rect(screen, ((122,122,122)), continueRect)
+        screen.blit(continueLabel,continuePosLabel)
+        pygame.display.update()
+
+    return 0
+
 class PLATFORM():
-    def __init__(self,pos,speed,dir):
+    def __init__(self,pos,speed,dir,active=False,min=-100,max=100):
         self.pos = pos
         self.speed = speed
         self.dir = dir
         self.img = pygame.image.load("graphics/platform.png")
+        self.active = active
+        self.PlayerStandingOn = False
+        if (dir == "x"):
+            self.min = self.pos[0]+min
+            self.max = self.pos[0]+max
+        else:
+            self.min = self.pos[1]+min
+            self.max = self.pos[1]+max
+        self.switched = True
 
     def get_rect(self, Player):
         return self.img.get_rect(topleft=(self.pos[0],self.pos[1]))
 
-    def move(self):
-        #if self.dir == "x":
-            #self.pos[0]+=0.1
-        #else:
-            #self.pos[1]+=0.1
-        pass
+    def move(self, Player, screen):
+        if self.active:
+            print(self.PlayerStandingOn)
+            print(Player.currentGravity)
+            if self.dir == "x":
+                if self.switched:
+                    if self.PlayerStandingOn:
+                        Player.movement[0]+=self.speed
+                    self.pos[0]+=self.speed
+                else:
+                    if self.PlayerStandingOn:
+                        Player.movement[0]-=self.speed
+                    self.pos[0]-=self.speed
+                if self.pos[0] > self.max or self.pos[0] < self.min:
+                    self.switched = not self.switched
+                
+
 
     def collision(self, screen, otherRect):
         if screen.getCollision(self.img.get_rect(topleft=(self.pos[0]+self.playerMovement[0]-(352-32),self.pos[1])), otherRect):
@@ -136,11 +190,16 @@ class PLAYER():
         else:
             screen.blit(pygame.transform.flip(self.image, True, False), (self.pos[0], self.pos[1]))
 
-    def move(self, screen, rects, particles):
+    def move(self, screen, rects, particles, platforms):
         #self.pos[0]+=self.dir*self.speed
         self.movement[0]+=self.dir*self.speed
         for rect in rects:
             if self.collision(screen, rect):      
+                #self.pos[0]-=self.dir*self.speed
+                self.movement[0]-=self.dir*self.speed
+                return False
+        for platform in platforms:
+            if self.collision(screen, platform.get_rect(self)):
                 #self.pos[0]-=self.dir*self.speed
                 self.movement[0]-=self.dir*self.speed
                 return False
@@ -178,6 +237,7 @@ class PLAYER():
                         return False
                 for platform in platforms:
                     if self.collision(screen, platform.get_rect(self)):
+                        platform.PlayerStandingOn = True
                         self.pos[1] += self.currentGravity * self.gravity
                         self.jumping = False
                         self.currentGravity = 0
@@ -201,7 +261,13 @@ class PLAYER():
                 if self.collision(screen, platform.get_rect(self)):
                     
                     self.pos[1] += self.currentGravity * self.gravity
+                   
+                    platform.PlayerStandingOn = True
+                    
                     return False
+                else:
+                    #platform.PlayerStandingOn = False
+                    pass
             self.jumping = True 
         return True
 
@@ -224,7 +290,7 @@ class PLAYER():
 
         if keyPressed == False:
             self.running = False
-        else:        
+        else:
             self.running = True
 
         if screen.getKeyHeldDown('SPACE') and self.currentGravity == 0 and self.jumping == False:
@@ -266,7 +332,7 @@ GAME.setup()
 Player = PLAYER([352-32, 704-128])
 bulletImg = pygame.image.load("graphics/bullet.png")
 bullets = []
-level = 1
+level = 2
 levelData = GAME.getLevelData(level)
 images = {"1": pygame.image.load("graphics/grass.png"),
           "3": pygame.image.load("graphics/ground.png"),
@@ -291,10 +357,15 @@ gameOverText = "game over"
 gameOverLabel = gameOverFont.render(gameOverText, True, (170,0,0))
 gameOverTextPos = (700//2 - (gameOverLabel.get_width()//2), 700//2-20 )
 
-victoryFont = pygame.font.Font("fonts/fullpack.ttf", 48)
+victoryFont = pygame.font.Font("fonts/fullpack.ttf", 32)
+victoryFont2 = pygame.font.Font("fonts/fullpack.ttf", 16)
 victoryText = "LEVEL COMPLETE"
-victoryLabel = victoryFont.render(victoryText, True, (170,0,0))
-victoryTextPos = (700//2 - (victoryLabel.get_width()//2), 700//2-20 )
+victoryLabel = victoryFont.render(victoryText, True, (100,20,4))
+victoryTextPos = [700//2 - (victoryLabel.get_width()//2), 700//2-50 ]
+victoryTextSpawnPos = [-100-victoryLabel.get_width(), 700//2-50 ]
+victoryTextSpawnPos2 = [800, 700//2-10 ]
+victoryLabel2 = victoryFont.render("PRESS ANY BUTTON", False, (100,20,4))
+victoryTextPos2 = [700//2 - (victoryLabel.get_width()//2), 700//2-10 ]
 
 for y in range(len(levelData)):
     for x in range(len(levelData[0])):
@@ -312,7 +383,12 @@ for y in range(len(levelData)):
             rects.append(images["8"].get_rect(topleft=(x*64,y*64)))
         if levelData[y][x] == '9': #Block
         #    rects.append(images["9"].get_rect(topleft=(x*64,y*64)))
-            platforms.append(PLATFORM((x*64,y*64),1,"x"))
+            if level == 2:
+                platforms.append(PLATFORM([x*64,y*64],1,"x", False, 0,700))
+        if levelData[y][x] == 'q': #Block
+        #    rects.append(images["9"].get_rect(topleft=(x*64,y*64)))
+            if level == 2:
+                platforms.append(PLATFORM([x*64,y*64],1,"x", True, 0,700))
 
 running = False
 while (running == False):
@@ -333,9 +409,13 @@ while (running == False):
             rotimage = pygame.transform.rotate(bulletImg,angle)
             bullets.append(BULLET(positionToSpawn, dir, Player.movement, rotimage))
         if event.type == pygame.KEYDOWN and levelComplete:
+            if menu(GAME.screen, level-1) != 0:
+                running = True
+                break
             levelComplete = False
             levelData = GAME.getLevelData(level)
             particles = []
+            flagRect = 0
             rects = []
             for y in range(len(levelData)):
                 for x in range(len(levelData[0])):
@@ -353,7 +433,12 @@ while (running == False):
                         rects.append(images["8"].get_rect(topleft=(x*64,y*64)))
                     if levelData[y][x] == '9': #Block
                     #    rects.append(images["9"].get_rect(topleft=(x*64,y*64)))
-                        platforms.append(PLATFORM((x*64,y*64),1,"x"))
+                        if level == 2:
+                            platforms.append(PLATFORM([x*64,y*64],1,"x", False, 0,200))
+                    if levelData[y][x] == 'q': #Block
+                    #    rects.append(images["9"].get_rect(topleft=(x*64,y*64)))
+                        if level == 2:
+                            platforms.append(PLATFORM([x*64,y*64],1,"x", True, -100,700))
 
 
             trailParticles = []
@@ -395,9 +480,13 @@ while (running == False):
     if (gameOver==False):
         if (not levelComplete):
             Player.Input(GAME, rects, platforms)
-            Player.move(GAME, rects, particles)
+            Player.move(GAME, rects, particles, platforms)
             Player.checkIfStandingOnGround(GAME, rects,platforms)
             Player.update(GAME, rects, platforms)
+            
+            if Player.currentGravity < -1 or Player.currentGravity > 0:
+                for platform in platforms:
+                    platform.PlayerStandingOn = False
         else:
             Player.image = Player.idle
         Player.draw(GAME.screen)
@@ -410,12 +499,12 @@ while (running == False):
             p.draw(GAME.screen, Player)
 
     for p in platforms:
-        p.move()
+        p.move(Player, GAME)
         p.draw(GAME.screen,Player)
 
     if (not levelComplete):
         for bullet in bullets:
-            if bullet.pos[0] < -1000 or bullet.pos[1] < -1000 or bullet.pos[1] > 1704 or bullet.pos[0] > 1704:
+            if bullet.pos[0] < -2000 or bullet.pos[1] < -2000 or bullet.pos[1] > 2704 or bullet.pos[0] > 704:
                 bullets.remove(bullet)
             else:
                 bullet.move()
@@ -430,7 +519,6 @@ while (running == False):
                 for rect in rects:
                     if bullet.collision(GAME, rect):
                         bullets.remove(bullets[bullets.index(bullet)])
-                        print(434)
                         particles.append(PARTICLE((136, 42, 3), 3, 6, bullet.pos, [random.randint(0, 20) / 10 - 1,random.randint(0, 20) / 10 - 1], 50, Player.movement[0]))
                         particles.append(PARTICLE((136, 42, 3), 3, 6, bullet.pos, [random.randint(0, 22) / 12 - 2,random.randint(0, 22) / 12 - 2], 50, Player.movement[0]))
                         particles.append(PARTICLE((136, 42, 3), 3, 6, bullet.pos, [random.randint(0, 15) / 9 - 0.5,random.randint(0, 15) / 9 - 0.5], 50, Player.movement[0]))
@@ -454,16 +542,28 @@ while (running == False):
                                 rects.append(images["1"].get_rect(topleft=(15*64,7*64)))
                                 levelData[7][16] = '1'
                                 rects.append(images["1"].get_rect(topleft=(16*64,7*64)))
+                            elif level == 2:
+                                platforms[0].active = True
                             break       
 
     if (gameOver):
         GAME.screen.blit(gameOverLabel, gameOverTextPos)#;
     if (levelComplete):
-        GAME.screen.blit(victoryLabel, victoryTextPos)#;
+        GAME.screen.blit(victoryLabel, victoryTextSpawnPos)#;
+        if victoryTextSpawnPos != victoryTextPos:
+            dif = victoryTextPos[0]-victoryTextSpawnPos[0]
+            victoryTextSpawnPos[0]+=dif/50
+        GAME.screen.blit(victoryLabel2, victoryTextSpawnPos2)#;
+        if victoryTextSpawnPos2 != victoryTextPos2:
+            dif = victoryTextPos2[0]-victoryTextSpawnPos2[0]
+            victoryTextSpawnPos2[0]+=dif/50
 
-    trailParticles.append(PARTICLE((255,255,255), 1, 1, [Player.pos[0]+Player.image.get_width()/2,Player.pos[1]+Player.image.get_height()/2], [random.random()/10,random.random()/10],120,Player.movement[0]))
+    if Player.dir != 0:
+        trailParticles.append(PARTICLE((255,255,255), 1, 1, [Player.pos[0]+Player.image.get_width()/2,Player.pos[1]+Player.image.get_height()/2], [random.random()/10,random.random()/10],120,Player.movement[0]))
 
     pygame.display.update()
     clock.tick(30)
+
+
 
     
