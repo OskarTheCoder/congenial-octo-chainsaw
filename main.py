@@ -7,7 +7,6 @@ pygame.init()
 pygame.mouse.set_visible(True)
 
 clock = pygame.time.Clock()
-print()
 mapImg = pygame.image.load("graphics/map.png")
 
 gameOver = False
@@ -233,7 +232,7 @@ class PLAYER():
                         self.currentGravity = 0
                         return False
                 for platform in platforms:
-                    if self.collision(screen, platform.get_rect(self)):
+                    if self.collision(screen, platform.get_rect(self)) and platform.pos[1]-60 < self.pos[1]:
                         platform.PlayerStandingOn = True
                         self.pos[1] += self.currentGravity * self.gravity
                         self.jumping = False
@@ -255,7 +254,7 @@ class PLAYER():
                     return False     
             for platform in platforms:
 
-                if self.collision(screen, platform.get_rect(self)):
+                if self.collision(screen, platform.get_rect(self)) and platform.pos[1]-60 < self.pos[1]:
                     
                     self.pos[1] += self.currentGravity * self.gravity
                    
@@ -263,7 +262,6 @@ class PLAYER():
                     
                     return False
                 else:
-                    #platform.PlayerStandingOn = False
                     pass
             self.jumping = True 
         return True
@@ -366,7 +364,7 @@ victoryTextPos2 = [700//2 - (victoryLabel.get_width()//2), 700//2-10 ]
 
 for y in range(len(levelData)):
     for x in range(len(levelData[0])):
-        if levelData[y][x] == '1': #Block
+        if levelData[y][x] == '1':
             rects.append(images["1"].get_rect(topleft=(x*64,y*64)))
         elif levelData[y][x] == '2':
             targetRect = images["2"].get_rect(topleft=(x*64,y*64))
@@ -374,16 +372,14 @@ for y in range(len(levelData)):
             rects.append(images["2"].get_rect(topleft=(x*64,y*64)))
         elif levelData[y][x] == '3':
             rects.append(images["3"].get_rect(topleft=(x*64,y*64)))
-        if levelData[y][x] == '7': #Block
+        if levelData[y][x] == '7':
             rects.append(images["7"].get_rect(topleft=(x*64,y*64)))
-        if levelData[y][x] == '8': #Block
+        if levelData[y][x] == '8':
             rects.append(images["8"].get_rect(topleft=(x*64,y*64)))
-        if levelData[y][x] == '9': #Block
-        #    rects.append(images["9"].get_rect(topleft=(x*64,y*64)))
+        if levelData[y][x] == '9':
             if level == 2:
                 platforms.append(PLATFORM([x*64,y*64],1,"x", False, 0,700))
-        if levelData[y][x] == 'q': #Block
-        #    rects.append(images["9"].get_rect(topleft=(x*64,y*64)))
+        if levelData[y][x] == 'q':
             if level == 2:
                 platforms.append(PLATFORM([x*64,y*64],1,"x", True, 0,700))
 
@@ -416,7 +412,7 @@ while (running == False):
             rects = []
             for y in range(len(levelData)):
                 for x in range(len(levelData[0])):
-                    if levelData[y][x] == '1': #Block
+                    if levelData[y][x] == '1':
                         rects.append(images["1"].get_rect(topleft=(x*64,y*64)))
                     elif levelData[y][x] == '2':
                         targetRect = images["2"].get_rect(topleft=(x*64,y*64))
@@ -424,16 +420,14 @@ while (running == False):
                         rects.append(images["2"].get_rect(topleft=(x*64,y*64)))
                     elif levelData[y][x] == '3':
                         rects.append(images["3"].get_rect(topleft=(x*64,y*64)))
-                    if levelData[y][x] == '7': #Block
+                    if levelData[y][x] == '7':
                         rects.append(images["7"].get_rect(topleft=(x*64,y*64)))
-                    if levelData[y][x] == '8': #Block
+                    if levelData[y][x] == '8':
                         rects.append(images["8"].get_rect(topleft=(x*64,y*64)))
-                    if levelData[y][x] == '9': #Block
-                    #    rects.append(images["9"].get_rect(topleft=(x*64,y*64)))
+                    if levelData[y][x] == '9':
                         if level == 2:
                             platforms.append(PLATFORM([x*64,y*64],1,"x", False, 0,200))
-                    if levelData[y][x] == 'q': #Block
-                    #    rects.append(images["9"].get_rect(topleft=(x*64,y*64)))
+                    if levelData[y][x] == 'q':
                         if level == 2:
                             platforms.append(PLATFORM([x*64,y*64],1,"x", True, -100,700))
 
@@ -478,6 +472,7 @@ while (running == False):
         if (not levelComplete):
             Player.Input(GAME, rects, platforms)
             Player.checkIfStandingOnGround(GAME, rects,platforms)
+
             Player.move(GAME, rects, particles, platforms)
             Player.update(GAME, rects, platforms)
             
@@ -516,9 +511,13 @@ while (running == False):
                 for rect in rects:
                     if bullet.collision(GAME, rect):
                         bullets.remove(bullets[bullets.index(bullet)])
-                        particles.append(PARTICLE((136, 42, 3), 3, 6, bullet.pos, [random.randint(0, 20) / 10 - 1,random.randint(0, 20) / 10 - 1], 50, Player.movement[0]))
-                        particles.append(PARTICLE((136, 42, 3), 3, 6, bullet.pos, [random.randint(0, 22) / 12 - 2,random.randint(0, 22) / 12 - 2], 50, Player.movement[0]))
-                        particles.append(PARTICLE((136, 42, 3), 3, 6, bullet.pos, [random.randint(0, 15) / 9 - 0.5,random.randint(0, 15) / 9 - 0.5], 50, Player.movement[0]))
+                        a = [random.randint(-20, 20) / 20,random.randint(-20, 20) / 20]
+                        particles.append(PARTICLE((136, 42, 3), 3, 6, [bullet.pos[0],bullet.pos[1]], a, 50, Player.movement[0]))
+                        b = [random.randint(-22, 22) / 24,random.randint(-22, 22) / 24]
+                        particles.append(PARTICLE((136, 42, 3), 2, 5, [bullet.pos[0],bullet.pos[1]], b, 50, Player.movement[0]))
+
+                        print(a,b)
+
                         break
                     if targetRect != 0:
                         if bullet.collision(GAME, targetRect):
@@ -539,6 +538,7 @@ while (running == False):
                                 levelData[7][16] = '1'
                                 rects.append(images["1"].get_rect(topleft=(16*64,7*64)))
                             elif level == 2:
+                                levelData[9][16] = '4'
                                 platforms[0].active = True
                             break       
 
@@ -554,8 +554,8 @@ while (running == False):
             dif = victoryTextPos2[0]-victoryTextSpawnPos2[0]
             victoryTextSpawnPos2[0]+=dif/50
 
-    if Player.dir != 0:
-        trailParticles.append(PARTICLE((255,255,255), 1, 1, [Player.pos[0]+Player.image.get_width()/2,Player.pos[1]+Player.image.get_height()/2], [random.random()/10,random.random()/10],120,Player.movement[0]))
+    #if Player.dir != 0:
+    #    trailParticles.append(PARTICLE((255,255,255), 1, 1, [Player.pos[0]+Player.image.get_width()/2,Player.pos[1]+Player.image.get_height()/2], [random.random()/10,random.random()/10],120,Player.movement[0]))
 
     pygame.display.update()
     clock.tick(30)
