@@ -66,8 +66,6 @@ class PLATFORM():
 
     def move(self, Player, screen):
         if self.active:
-            print(self.PlayerStandingOn)
-            print(Player.currentGravity)
             if self.dir == "x":
                 if self.switched:
                     if self.PlayerStandingOn:
@@ -191,18 +189,16 @@ class PLAYER():
             screen.blit(pygame.transform.flip(self.image, True, False), (self.pos[0], self.pos[1]))
 
     def move(self, screen, rects, particles, platforms):
-        #self.pos[0]+=self.dir*self.speed
         self.movement[0]+=self.dir*self.speed
         for rect in rects:
             if self.collision(screen, rect):      
-                #self.pos[0]-=self.dir*self.speed
                 self.movement[0]-=self.dir*self.speed
                 return False
         for platform in platforms:
             if self.collision(screen, platform.get_rect(self)):
-                #self.pos[0]-=self.dir*self.speed
                 self.movement[0]-=self.dir*self.speed
                 self.jumping = True
+                self.currentGravity-=1
                 return False
         for p in particles:
             pass
@@ -481,8 +477,8 @@ while (running == False):
     if (gameOver==False):
         if (not levelComplete):
             Player.Input(GAME, rects, platforms)
-            Player.move(GAME, rects, particles, platforms)
             Player.checkIfStandingOnGround(GAME, rects,platforms)
+            Player.move(GAME, rects, particles, platforms)
             Player.update(GAME, rects, platforms)
             
             if Player.currentGravity < -1 or Player.currentGravity > 0:
