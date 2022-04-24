@@ -327,7 +327,7 @@ GAME.setup()
 Player = PLAYER([352-32, 704-128])
 bulletImg = pygame.image.load("graphics/bullet.png")
 bullets = []
-level = 2
+level = 1
 levelData = GAME.getLevelData(level)
 images = {"1": pygame.image.load("graphics/grass.png"),
           "3": pygame.image.load("graphics/ground.png"),
@@ -337,7 +337,8 @@ images = {"1": pygame.image.load("graphics/grass.png"),
           "6": pygame.image.load("graphics/flag_shit.png"),
           "7": pygame.image.load("graphics/sand.png"),
           "8": pygame.image.load("graphics/sand_ground.png"),
-          "9": pygame.image.load("graphics/platform.png")
+          "9": pygame.image.load("graphics/platform.png"),
+          "cactus": pygame.image.load("graphics/cactus.png"),
         }
 rects = []
 targetRect = 0
@@ -345,7 +346,10 @@ particles = []
 trailParticles = []
 platforms = []
 
-flagRect = (images["5"].get_rect(topleft=(48*64,8*64)))
+if level ==1:
+    flagRect = (images["5"].get_rect(topleft=(48*64,8*64)))
+else:
+    flagRect = 0
 
 gameOverFont = pygame.font.Font("fonts/futurist.ttf", 64)
 gameOverText = "game over"
@@ -382,6 +386,8 @@ for y in range(len(levelData)):
         if levelData[y][x] == 'q':
             if level == 2:
                 platforms.append(PLATFORM([x*64,y*64],1,"x", True, 0,700))
+        if levelData[y][x] == 'c':
+            rects.append(images["cactus"].get_rect(topleft=(x*64,y*64)))
 
 running = False
 while (running == False):
@@ -426,17 +432,18 @@ while (running == False):
                         rects.append(images["8"].get_rect(topleft=(x*64,y*64)))
                     if levelData[y][x] == '9':
                         if level == 2:
-                            platforms.append(PLATFORM([x*64,y*64],1,"x", False, 0,200))
+                            platforms.append(PLATFORM([x*64,y*64],1,"x", False, 0,700))
                     if levelData[y][x] == 'q':
-                        if level == 2:
-                            platforms.append(PLATFORM([x*64,y*64],1,"x", True, -100,700))
+                        #if level == 2:
+                        platforms.append(PLATFORM([x*64,y*64],1,"x", True, -100,700))
+                    if levelData[y][x] == 'c':
+                        rects.append(images["cactus"].get_rect(topleft=(x*64,y*64)))
 
 
             trailParticles = []
             Player.pos = [352-32, 704-128]
             Player.movement = [352-32,0]
             if level == 2:
-                targetRect = 0
                 flagRect = 0
 
     GAME.update((78,173,245))
